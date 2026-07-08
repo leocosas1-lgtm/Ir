@@ -177,7 +177,7 @@ function pintarHorario(horario) {
 document.addEventListener('DOMContentLoaded', function() {
   if (!CODIGO) { mostrarError('Enlace inválido — falta el código.<br>Usa el link que te envió el administrador.'); return; }
 
-  fetch(SCRIPT_URL + '?action=guardarVisita&c=' + encodeURIComponent(CODIGO))
+     ?action=guardarVisita&codigo=.
     .then(function(r) { return r.json(); })
     .then(function(data) {
       if (!data.ok) throw new Error(data.error || 'Código no encontrado');
