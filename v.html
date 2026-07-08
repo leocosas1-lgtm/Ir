@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Registrar visita</title>
+  <style>
+    :root {
+      --bg: #f8fafc; --surface: #fff; --border: #e2e8f0;
+      --text: #0f172a; --text2: #475569; --text3: #94a3b8;
+      --accent: #2563eb; --success: #059669; --radius: 12px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    body { padding: 20px 18px 40px; max-width: 480px; margin: 0 auto; }
+
+    .header { margin-bottom: 24px; padding-top: 8px; }
+    .local-nombre { font-size: 22px; font-weight: 700; line-height: 1.2; }
+    .local-terr { font-size: 14px; color: var(--text3); margin-top: 4px; }
+
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 14px; }
+    .card-lbl { font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 14px; }
+
+    .radio-list { display: flex; flex-direction: column; gap: 10px; }
+    .radio-opt { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 2px solid var(--border); border-radius: var(--radius); cursor: pointer; transition: border-color .12s, background .12s; }
+    .radio-opt:hover { border-color: #cbd5e1; background: #f8fafc; }
+    .radio-opt.sel { border-color: var(--accent); background: #eff6ff; }
+    .radio-opt input[type=radio] { display: none; }
+    .radio-dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+    .radio-opt.sel .radio-dot { border-color: var(--accent); background: var(--accent); }
+    .radio-dot::after { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #fff; opacity: 0; }
+    .radio-opt.sel .radio-dot::after { opacity: 1; }
+    .radio-txt { font-size: 15px; font-weight: 500; }
+
+    textarea {
+      width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--radius);
+      font-family: inherit; font-size: 14px; color: var(--text); resize: vertical; min-height: 80px;
+    }
+    textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: transparent; }
+
+    .chips-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip-chk { display: none; }
+    .chip-lbl { padding: 8px 14px; border: 1px solid var(--border); border-radius: 20px; font-size: 13px; font-weight: 600; color: var(--text2); cursor: pointer; user-select: none; }
+    .chip-chk:checked + .chip-lbl { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    .horario-lista { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--text2); }
+    .horario-lista .hoy { font-weight: 700; color: var(--text); }
+    .horario-dia { text-transform: capitalize; display: inline-block; width: 84px; }
+
+    .btn-registrar {
+      width: 100%; padding: 16px; border: none; border-radius: var(--radius);
+      background: var(--success); color: #fff; font-family: inherit; font-size: 16px;
+      font-weight: 700; cursor: pointer; margin-top: 8px; transition: background .15s;
+    }
+    .btn-registrar:hover:not(:disabled) { background: #047857; }
+    .btn-registrar:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    .spin { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; vertical-align: middle; margin-right: 6px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #cargando { text-align: center; padding: 60px 20px; color: var(--text3); font-size: 14px; }
+    #exito { display: none; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; text-align: center; padding: 32px 20px; }
+    .exito-icono { font-size: 72px; margin-bottom: 20px; }
+    .exito-titulo { font-size: 24px; font-weight: 700; color: var(--success); margin-bottom: 8px; }
+    .exito-sub { font-size: 15px; color: var(--text2); }
+
+    .err-box { background: #fef2f2; border: 1px solid #fecaca; border-radius: var(--radius); padding: 16px 18px; color: #dc2626; font-size: 14px; margin-top: 24px; }
+  </style>
+</head>
+<body>
+
+<div id="cargando">Cargando…</div>
+
+<div id="form" style="display:none">
+  <div class="header">
+    <div class="local-nombre" id="lblNombre"></div>
+    <div class="local-terr" id="lblTerr"></div>
+  </div>
+
+  <div class="card" id="cardHorario" style="display:none">
+    <div class="card-lbl">Horario</div>
+    <div class="horario-lista" id="horarioLista"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-lbl">Estado de la visita</div>
+    <div class="radio-list" id="radioList">
+      <label class="radio-opt sel" data-val="Visitado">
+        <input type="radio" name="estado" value="Visitado" checked>
+        <div class="radio-dot"></div>
+        <span class="radio-txt">✓ Visitado</span>
+      </label>
+      <label class="radio-opt" data-val="No estaba">
+        <input type="radio" name="estado" value="No estaba">
+        <div class="radio-dot"></div>
+        <span class="radio-txt">No estaba</span>
+      </label>
+      <label class="radio-opt" data-val="Llamar después">
+        <input type="radio" name="estado" value="Llamar después">
+        <div class="radio-dot"></div>
+        <span class="radio-txt">Llamar después</span>
+      </label>
+      <label class="radio-opt" data-val="Cliente nuevo">
+        <input type="radio" name="estado" value="Cliente nuevo">
+        <div class="radio-dot"></div>
+        <span class="radio-txt">Cliente nuevo</span>
+      </label>
+    </div>
+  </div>
+
+  <div id="camposClienteNuevo" style="display:none">
+    <div class="card">
+      <div class="card-lbl">Marca (puede elegir varias)</div>
+      <div class="chips-wrap" id="chipsMarca">
+        <input type="checkbox" class="chip-chk" id="m-vivo" value="Vivo"><label class="chip-lbl" for="m-vivo">Vivo</label>
+        <input type="checkbox" class="chip-chk" id="m-arizona" value="Arizona"><label class="chip-lbl" for="m-arizona">Arizona</label>
+        <input type="checkbox" class="chip-chk" id="m-ambrosoli" value="Ambrosoli"><label class="chip-lbl" for="m-ambrosoli">Ambrosoli</label>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-lbl">Presentación (puede elegir varias)</div>
+      <div class="chips-wrap" id="chipsPresentacion">
+        <input type="checkbox" class="chip-chk" id="p-340" value="340ml"><label class="chip-lbl" for="p-340">340ml</label>
+        <input type="checkbox" class="chip-chk" id="p-650" value="650ml"><label class="chip-lbl" for="p-650">650ml</label>
+        <input type="checkbox" class="chip-chk" id="p-tetra" value="tetra box"><label class="chip-lbl" for="p-tetra">tetra box</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-lbl">Nota adicional (opcional)</div>
+    <textarea id="nota" placeholder="Ej: Interesado en el catálogo, llamar el lunes…"></textarea>
+  </div>
+
+  <button class="btn-registrar" id="btnReg" onclick="registrar()">Registrar visita</button>
+</div>
+
+<!-- Pantalla de éxito -->
+<div id="exito">
+  <div class="exito-icono">✅</div>
+  <div class="exito-titulo">¡Visita registrada!</div>
+  <div class="exito-sub" id="exitoSub"></div>
+</div>
+
+<script>
+var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxtVNCCmQPQov4-gszTqqWO5TJixk-rYrU3KT-JPZ73lmX0FVg7ycBPx2apm5qVjKYI/exec';
+var DIAS_SEMANA = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+
+var params = new URLSearchParams(window.location.search);
+var CODIGO = params.get('c') || '';
+var PID = '', NOMBRE = '', TERRITORIO = '';
+
+function mostrarError(msg) {
+  document.getElementById('cargando').style.display = 'none';
+  document.getElementById('form').innerHTML = '<div class="err-box">⚠️ ' + msg + '</div>';
+  document.getElementById('form').style.display = 'block';
+}
+
+function pintarHorario(horario) {
+  if (!horario) return;
+  var hoy = DIAS_SEMANA[new Date().getDay()];
+  var lista = document.getElementById('horarioLista');
+  lista.innerHTML = '';
+  horario.split('|').forEach(function(seg) {
+    var partes = seg.split(':');
+    var dia = (partes.shift() || '').trim().toLowerCase();
+    var horas = partes.join(':').trim();
+    if (!dia) return;
+    var fila = document.createElement('div');
+    if (dia === hoy) fila.className = 'hoy';
+    fila.innerHTML = '<span class="horario-dia">' + dia + '</span>' + (horas || 'Cerrado');
+    lista.appendChild(fila);
+  });
+  document.getElementById('cardHorario').style.display = 'block';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  if (!CODIGO) { mostrarError('Enlace inválido — falta el código.<br>Usa el link que te envió el administrador.'); return; }
+
+  fetch(SCRIPT_URL + '?action=resolveCheckin&c=' + encodeURIComponent(CODIGO))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (!data.ok) throw new Error(data.error || 'Código no encontrado');
+      PID = data.pid;
+      NOMBRE = data.nombre;
+      TERRITORIO = data.territorio;
+
+      document.getElementById('lblNombre').textContent = NOMBRE || 'Local sin nombre';
+      document.getElementById('lblTerr').textContent = TERRITORIO || '';
+      pintarHorario(data.horario);
+
+      document.getElementById('cargando').style.display = 'none';
+      document.getElementById('form').style.display = 'block';
+    })
+    .catch(function(e) {
+      mostrarError('No se pudo cargar este link (' + e.message + ').<br>Pídele al administrador que te envíe uno nuevo.');
+    });
+
+  document.querySelectorAll('.radio-opt').forEach(function(opt) {
+    opt.addEventListener('click', function() {
+      document.querySelectorAll('.radio-opt').forEach(function(o) { o.classList.remove('sel'); });
+      opt.classList.add('sel');
+      opt.querySelector('input').checked = true;
+      document.getElementById('camposClienteNuevo').style.display =
+        (opt.getAttribute('data-val') === 'Cliente nuevo') ? 'block' : 'none';
+    });
+  });
+});
+
+function valoresMarcados(selector) {
+  return Array.prototype.slice.call(document.querySelectorAll(selector + ':checked'))
+    .map(function(el) { return el.value; })
+    .join(',');
+}
+
+function registrar() {
+  var radioChecked = document.querySelector('input[name=estado]:checked');
+  var estado = radioChecked ? radioChecked.value : 'Visitado';
+  var esClienteNuevo = estado === 'Cliente nuevo';
+  var marca = esClienteNuevo ? valoresMarcados('#chipsMarca .chip-chk') : '';
+  var presentacion = esClienteNuevo ? valoresMarcados('#chipsPresentacion .chip-chk') : '';
+
+  var nota = document.getElementById('nota').value.trim();
+  var estadoFinal = nota ? (estado + ' — ' + nota) : estado;
+
+  var btn = document.getElementById('btnReg');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>Guardando…';
+
+  var url = SCRIPT_URL + '?action=guardarVisita'
+    + '&pid=' + encodeURIComponent(PID)
+    + '&nombre=' + encodeURIComponent(NOMBRE)
+    + '&territorio=' + encodeURIComponent(TERRITORIO)
+    + '&estado=' + encodeURIComponent(estadoFinal)
+    + '&marca=' + encodeURIComponent(marca)
+    + '&presentacion=' + encodeURIComponent(presentacion);
+
+  fetch(url)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (!data.ok) throw new Error(data.error || 'Error desconocido');
+      document.getElementById('form').style.display = 'none';
+      var ex = document.getElementById('exito');
+      ex.style.display = 'flex';
+      document.getElementById('exitoSub').textContent = (NOMBRE || 'Local') + ' · ' + estadoFinal;
+    })
+    .catch(function(e) {
+      btn.disabled = false;
+      btn.textContent = 'Registrar visita';
+      alert('Error al guardar: ' + e.message);
+    });
+}
+</script>
+</body>
+</html>
