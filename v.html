@@ -28,6 +28,8 @@
     .horario-badge-lbl { font-size: 9px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; }
     .horario-badge-val { font-size: 13px; font-weight: 700; color: var(--accent); white-space: nowrap; }
     .horario-badge.cerrado .horario-badge-val { color: var(--danger); }
+    .horario-badge.sin-datos { background: #fffbeb; border-color: #fde68a; }
+    .horario-badge.sin-datos .horario-badge-val { color: #b45309; }
 
     .horario-expandido { margin-top: 10px; padding: 14px 16px; background: var(--surface); border: 1px solid var(--border);
       border-radius: var(--radius); display: none; }
@@ -35,6 +37,7 @@
     .horario-lista { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--text2); }
     .horario-lista .hoy { font-weight: 700; color: var(--text); }
     .horario-dia { text-transform: capitalize; display: inline-block; width: 84px; }
+    .horario-aviso { font-size: 12.5px; color: var(--text2); line-height: 1.5; }
 
     .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 14px; }
     .card-lbl { font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 14px; }
@@ -98,7 +101,7 @@
         <div class="local-terr" id="lblTerr"></div>
       </div>
       <div class="horario-badge" id="horarioBadge" onclick="toggleHorario()" style="display:none">
-        <span class="horario-badge-lbl">Hoy</span>
+        <span class="horario-badge-lbl" id="horarioBadgeLbl">Hoy</span>
         <span class="horario-badge-val" id="horarioHoy">—</span>
       </div>
     </div>
@@ -204,10 +207,24 @@ function mostrarError(msg) {
 }
 
 function pintarHorario(horario) {
-  if (!horario) return;
-  var hoy = DIAS_SEMANA[new Date().getDay()];
+  var badge = document.getElementById('horarioBadge');
   var lista = document.getElementById('horarioLista');
+  var lbl = document.getElementById('horarioBadgeLbl');
   lista.innerHTML = '';
+
+  if (!horario) {
+    badge.className = 'horario-badge sin-datos';
+    lbl.textContent = 'Horario';
+    document.getElementById('horarioHoy').textContent = 'No disp.';
+    var aviso = document.createElement('div');
+    aviso.className = 'horario-aviso';
+    aviso.textContent = 'No tenemos el horario de este negocio registrado. Antes de asumir que está abierto, confírmalo con el equipo de ventas.';
+    lista.appendChild(aviso);
+    badge.style.display = 'flex';
+    return;
+  }
+
+  var hoy = DIAS_SEMANA[new Date().getDay()];
   var horaHoy = '';
 
   horario.split('|').forEach(function(seg) {
@@ -221,9 +238,9 @@ function pintarHorario(horario) {
     lista.appendChild(fila);
   });
 
-  var badge = document.getElementById('horarioBadge');
+  lbl.textContent = 'Hoy';
   document.getElementById('horarioHoy').textContent = horaHoy || '—';
-  if (/cerrado/i.test(horaHoy)) badge.classList.add('cerrado');
+  badge.className = 'horario-badge' + (/cerrado/i.test(horaHoy) ? ' cerrado' : '');
   badge.style.display = 'flex';
 }
 
