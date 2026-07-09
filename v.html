@@ -8,15 +8,33 @@
     :root {
       --bg: #f8fafc; --surface: #fff; --border: #e2e8f0;
       --text: #0f172a; --text2: #475569; --text3: #94a3b8;
-      --accent: #2563eb; --success: #059669; --radius: 12px;
+      --accent: #2563eb; --success: #059669; --danger: #dc2626; --radius: 12px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
     body { padding: 20px 18px 40px; max-width: 480px; margin: 0 auto; }
 
-    .header { margin-bottom: 24px; padding-top: 8px; }
-    .local-nombre { font-size: 22px; font-weight: 700; line-height: 1.2; }
-    .local-terr { font-size: 14px; color: var(--text3); margin-top: 4px; }
+    .header { margin-bottom: 20px; padding-top: 8px; }
+    .header-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+    .header-info { min-width: 0; }
+    .local-nombre { font-size: 20px; font-weight: 700; line-height: 1.25; overflow-wrap: break-word; }
+    .local-terr { font-size: 13px; color: var(--text3); margin-top: 2px; }
+
+    .horario-badge { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 1px;
+      padding: 7px 13px; border-radius: 12px; border: 1px solid var(--border); background: #eff6ff;
+      cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform .1s; }
+    .horario-badge:active { transform: scale(0.96); }
+    .horario-badge.cerrado { background: #fef2f2; border-color: #fecaca; }
+    .horario-badge-lbl { font-size: 9px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; }
+    .horario-badge-val { font-size: 13px; font-weight: 700; color: var(--accent); white-space: nowrap; }
+    .horario-badge.cerrado .horario-badge-val { color: var(--danger); }
+
+    .horario-expandido { margin-top: 10px; padding: 14px 16px; background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); display: none; }
+    .horario-expandido.abierto { display: block; }
+    .horario-lista { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--text2); }
+    .horario-lista .hoy { font-weight: 700; color: var(--text); }
+    .horario-dia { text-transform: capitalize; display: inline-block; width: 84px; }
 
     .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 14px; }
     .card-lbl { font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 14px; }
@@ -40,19 +58,20 @@
 
     .chips-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
     .chip-chk { display: none; }
-    .chip-lbl { padding: 8px 14px; border: 1px solid var(--border); border-radius: 20px; font-size: 13px; font-weight: 600; color: var(--text2); cursor: pointer; user-select: none; }
+    .chip-lbl { padding: 8px 14px; border: 1px solid var(--border); border-radius: 20px; font-size: 13px; font-weight: 600; color: var(--text2); cursor: pointer; user-select: none; transition: transform .1s; }
+    .chip-lbl:active { transform: scale(0.96); }
     .chip-chk:checked + .chip-lbl { background: var(--accent); color: #fff; border-color: var(--accent); }
 
-    .horario-lista { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--text2); }
-    .horario-lista .hoy { font-weight: 700; color: var(--text); }
-    .horario-dia { text-transform: capitalize; display: inline-block; width: 84px; }
+    .cat-bloque { border-top: 1px solid var(--border); padding-top: 14px; margin-top: -1px; }
+    .cat-bloque .card-lbl { color: var(--accent); }
 
     .btn-registrar {
       width: 100%; padding: 16px; border: none; border-radius: var(--radius);
       background: var(--success); color: #fff; font-family: inherit; font-size: 16px;
-      font-weight: 700; cursor: pointer; margin-top: 8px; transition: background .15s;
+      font-weight: 700; cursor: pointer; margin-top: 8px; transition: background .15s, transform .1s;
     }
     .btn-registrar:hover:not(:disabled) { background: #047857; }
+    .btn-registrar:active:not(:disabled) { transform: scale(0.98); }
     .btn-registrar:disabled { opacity: 0.55; cursor: not-allowed; }
 
     .spin { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; vertical-align: middle; margin-right: 6px; }
@@ -73,13 +92,19 @@
 
 <div id="form" style="display:none">
   <div class="header">
-    <div class="local-nombre" id="lblNombre"></div>
-    <div class="local-terr" id="lblTerr"></div>
-  </div>
-
-  <div class="card" id="cardHorario" style="display:none">
-    <div class="card-lbl">Horario</div>
-    <div class="horario-lista" id="horarioLista"></div>
+    <div class="header-top">
+      <div class="header-info">
+        <div class="local-nombre" id="lblNombre"></div>
+        <div class="local-terr" id="lblTerr"></div>
+      </div>
+      <div class="horario-badge" id="horarioBadge" onclick="toggleHorario()" style="display:none">
+        <span class="horario-badge-lbl">Hoy</span>
+        <span class="horario-badge-val" id="horarioHoy">—</span>
+      </div>
+    </div>
+    <div class="horario-expandido" id="horarioExpandido">
+      <div class="horario-lista" id="horarioLista"></div>
+    </div>
   </div>
 
   <div class="card">
@@ -108,21 +133,43 @@
     </div>
   </div>
 
-  <div id="camposClienteNuevo" style="display:none">
-    <div class="card">
-      <div class="card-lbl">Marca (puede elegir varias)</div>
-      <div class="chips-wrap" id="chipsMarca">
-        <input type="checkbox" class="chip-chk" id="m-vivo" value="Vivo"><label class="chip-lbl" for="m-vivo">Vivo</label>
-        <input type="checkbox" class="chip-chk" id="m-arizona" value="Arizona"><label class="chip-lbl" for="m-arizona">Arizona</label>
-        <input type="checkbox" class="chip-chk" id="m-ambrosoli" value="Ambrosoli"><label class="chip-lbl" for="m-ambrosoli">Ambrosoli</label>
+  <div class="card">
+    <div class="card-lbl">Marca (puede elegir varias)</div>
+    <div class="chips-wrap" id="chipsMarca">
+      <input type="checkbox" class="chip-chk marca-chk" id="m-Vivo" data-marca="Vivo" onchange="toggleCategoria(this)">
+      <label class="chip-lbl" for="m-Vivo">Vivo</label>
+      <input type="checkbox" class="chip-chk marca-chk" id="m-Arizona" data-marca="Arizona" onchange="toggleCategoria(this)">
+      <label class="chip-lbl" for="m-Arizona">Arizona</label>
+      <input type="checkbox" class="chip-chk marca-chk" id="m-Ambrosoli" data-marca="Ambrosoli" onchange="toggleCategoria(this)">
+      <label class="chip-lbl" for="m-Ambrosoli">Ambrosoli</label>
+    </div>
+
+    <div class="cat-bloque" id="cat-Vivo" data-marca="Vivo" style="display:none">
+      <div class="card-lbl" style="margin-top:16px">Categoría — Vivo</div>
+      <div class="chips-wrap">
+        <input type="checkbox" class="chip-chk" id="c-Vivo-0" value="Nectar de 1 litro"><label class="chip-lbl" for="c-Vivo-0">Nectar de 1 litro</label>
+        <input type="checkbox" class="chip-chk" id="c-Vivo-1" value="Tripack 140ml"><label class="chip-lbl" for="c-Vivo-1">Tripack 140ml</label>
+        <input type="checkbox" class="chip-chk" id="c-Vivo-2" value="Jugo en polvo"><label class="chip-lbl" for="c-Vivo-2">Jugo en polvo</label>
+        <input type="checkbox" class="chip-chk" id="c-Vivo-3" value="Mifrut 90"><label class="chip-lbl" for="c-Vivo-3">Mifrut 90</label>
+        <input type="checkbox" class="chip-chk" id="c-Vivo-4" value="Mifrut 120gr"><label class="chip-lbl" for="c-Vivo-4">Mifrut 120gr</label>
+        <input type="checkbox" class="chip-chk" id="c-Vivo-5" value="Cereales"><label class="chip-lbl" for="c-Vivo-5">Cereales</label>
+        <input type="checkbox" class="chip-chk" id="c-Vivo-6" value="Granolas"><label class="chip-lbl" for="c-Vivo-6">Granolas</label>
       </div>
     </div>
-    <div class="card">
-      <div class="card-lbl">Presentación (puede elegir varias)</div>
-      <div class="chips-wrap" id="chipsPresentacion">
-        <input type="checkbox" class="chip-chk" id="p-340" value="340ml"><label class="chip-lbl" for="p-340">340ml</label>
-        <input type="checkbox" class="chip-chk" id="p-650" value="650ml"><label class="chip-lbl" for="p-650">650ml</label>
-        <input type="checkbox" class="chip-chk" id="p-tetra" value="tetra box"><label class="chip-lbl" for="p-tetra">tetra box</label>
+
+    <div class="cat-bloque" id="cat-Arizona" data-marca="Arizona" style="display:none">
+      <div class="card-lbl" style="margin-top:16px">Categoría — Arizona</div>
+      <div class="chips-wrap">
+        <input type="checkbox" class="chip-chk" id="c-Arizona-0" value="340ml"><label class="chip-lbl" for="c-Arizona-0">340ml</label>
+        <input type="checkbox" class="chip-chk" id="c-Arizona-1" value="650ml"><label class="chip-lbl" for="c-Arizona-1">650ml</label>
+        <input type="checkbox" class="chip-chk" id="c-Arizona-2" value="Tetra box"><label class="chip-lbl" for="c-Arizona-2">Tetra box</label>
+      </div>
+    </div>
+
+    <div class="cat-bloque" id="cat-Ambrosoli" data-marca="Ambrosoli" style="display:none">
+      <div class="card-lbl" style="margin-top:16px">Categoría — Ambrosoli</div>
+      <div class="chips-wrap">
+        <input type="checkbox" class="chip-chk" id="c-Ambrosoli-0" value="Mentitas"><label class="chip-lbl" for="c-Ambrosoli-0">Mentitas</label>
       </div>
     </div>
   </div>
@@ -161,17 +208,38 @@ function pintarHorario(horario) {
   var hoy = DIAS_SEMANA[new Date().getDay()];
   var lista = document.getElementById('horarioLista');
   lista.innerHTML = '';
+  var horaHoy = '';
+
   horario.split('|').forEach(function(seg) {
     var partes = seg.split(':');
     var dia = (partes.shift() || '').trim().toLowerCase();
-    var horas = partes.join(':').trim();
+    var horas = (partes.join(':').trim()) || 'Cerrado';
     if (!dia) return;
     var fila = document.createElement('div');
-    if (dia === hoy) fila.className = 'hoy';
-    fila.innerHTML = '<span class="horario-dia">' + dia + '</span>' + (horas || 'Cerrado');
+    if (dia === hoy) { fila.className = 'hoy'; horaHoy = horas; }
+    fila.innerHTML = '<span class="horario-dia">' + dia + '</span>' + horas;
     lista.appendChild(fila);
   });
-  document.getElementById('cardHorario').style.display = 'block';
+
+  var badge = document.getElementById('horarioBadge');
+  document.getElementById('horarioHoy').textContent = horaHoy || '—';
+  if (/cerrado/i.test(horaHoy)) badge.classList.add('cerrado');
+  badge.style.display = 'flex';
+}
+
+function toggleHorario() {
+  document.getElementById('horarioExpandido').classList.toggle('abierto');
+}
+
+function toggleCategoria(chk) {
+  var bloque = document.getElementById('cat-' + chk.getAttribute('data-marca'));
+  if (!bloque) return;
+  if (chk.checked) {
+    bloque.style.display = 'block';
+  } else {
+    bloque.style.display = 'none';
+    bloque.querySelectorAll('.chip-chk').forEach(function(c) { c.checked = false; });
+  }
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -201,27 +269,28 @@ document.addEventListener('DOMContentLoaded', function() {
       document.querySelectorAll('.radio-opt').forEach(function(o) { o.classList.remove('sel'); });
       opt.classList.add('sel');
       opt.querySelector('input').checked = true;
-      document.getElementById('camposClienteNuevo').style.display =
-        (opt.getAttribute('data-val') === 'Cliente nuevo') ? 'block' : 'none';
     });
   });
 });
 
-function valoresMarcados(selector) {
-  return Array.prototype.slice.call(document.querySelectorAll(selector + ':checked'))
-    .map(function(el) { return el.value; })
-    .join(',');
+function recolectarInteracciones() {
+  var out = [];
+  document.querySelectorAll('.cat-bloque').forEach(function(bloque) {
+    if (bloque.style.display === 'none') return;
+    var marca = bloque.getAttribute('data-marca');
+    bloque.querySelectorAll('.chip-chk:checked').forEach(function(c) {
+      out.push({ marca: marca, categoria: c.value });
+    });
+  });
+  return out;
 }
 
 function registrar() {
   var radioChecked = document.querySelector('input[name=estado]:checked');
   var estado = radioChecked ? radioChecked.value : 'Visitado';
-  var esClienteNuevo = estado === 'Cliente nuevo';
-  var marca = esClienteNuevo ? valoresMarcados('#chipsMarca .chip-chk') : '';
-  var presentacion = esClienteNuevo ? valoresMarcados('#chipsPresentacion .chip-chk') : '';
-
   var nota = document.getElementById('nota').value.trim();
   var estadoFinal = nota ? (estado + ' — ' + nota) : estado;
+  var interacciones = recolectarInteracciones();
 
   var btn = document.getElementById('btnReg');
   btn.disabled = true;
@@ -232,8 +301,7 @@ function registrar() {
     + '&nombre=' + encodeURIComponent(NOMBRE)
     + '&territorio=' + encodeURIComponent(TERRITORIO)
     + '&estado=' + encodeURIComponent(estadoFinal)
-    + '&marca=' + encodeURIComponent(marca)
-    + '&presentacion=' + encodeURIComponent(presentacion);
+    + '&interacciones=' + encodeURIComponent(JSON.stringify(interacciones));
 
   fetch(url)
     .then(function(r) { return r.json(); })
