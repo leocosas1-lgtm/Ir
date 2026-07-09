@@ -306,7 +306,6 @@ function registrar() {
   var radioChecked = document.querySelector('input[name=estado]:checked');
   var estado = radioChecked ? radioChecked.value : 'Visitado';
   var nota = document.getElementById('nota').value.trim();
-  var estadoFinal = nota ? (estado + ' — ' + nota) : estado;
   var interacciones = recolectarInteracciones();
 
   var btn = document.getElementById('btnReg');
@@ -317,7 +316,8 @@ function registrar() {
     + '&pid=' + encodeURIComponent(PID)
     + '&nombre=' + encodeURIComponent(NOMBRE)
     + '&territorio=' + encodeURIComponent(TERRITORIO)
-    + '&estado=' + encodeURIComponent(estadoFinal)
+    + '&estado=' + encodeURIComponent(estado)
+    + '&nota=' + encodeURIComponent(nota)
     + '&interacciones=' + encodeURIComponent(JSON.stringify(interacciones));
 
   fetch(url)
@@ -327,7 +327,7 @@ function registrar() {
       document.getElementById('form').style.display = 'none';
       var ex = document.getElementById('exito');
       ex.style.display = 'flex';
-      document.getElementById('exitoSub').textContent = (NOMBRE || 'Local') + ' · ' + estadoFinal;
+      document.getElementById('exitoSub').textContent = (NOMBRE || 'Local') + ' · ' + estado + (nota ? ' — ' + nota : '');
     })
     .catch(function(e) {
       btn.disabled = false;
