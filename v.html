@@ -24,10 +24,10 @@
       padding: 7px 13px; border-radius: 12px; border: 1px solid var(--border); background: #eff6ff;
       cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform .1s; }
     .horario-badge:active { transform: scale(0.96); }
-    .horario-badge.cerrado { background: #fef2f2; border-color: #fecaca; }
-    .horario-badge-lbl { font-size: 9px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; }
+    .horario-badge-lbl { font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; }
     .horario-badge-val { font-size: 13px; font-weight: 700; color: var(--accent); white-space: nowrap; }
-    .horario-badge.cerrado .horario-badge-val { color: var(--danger); }
+    .horario-badge.disponible { background: #ecfdf5; border-color: #a7f3d0; }
+    .horario-badge.disponible .horario-badge-val { color: var(--success); }
     .horario-badge.sin-datos { background: #fffbeb; border-color: #fde68a; }
     .horario-badge.sin-datos .horario-badge-val { color: #b45309; }
 
@@ -240,7 +240,7 @@ function pintarHorario(horario) {
 
   lbl.textContent = 'Hoy';
   document.getElementById('horarioHoy').textContent = horaHoy || '—';
-  badge.className = 'horario-badge' + (/cerrado/i.test(horaHoy) ? ' cerrado' : '');
+  badge.className = 'horario-badge disponible';
   badge.style.display = 'flex';
 }
 
@@ -338,3 +338,4 @@ function registrar() {
 </script>
 </body>
 </html>
+
